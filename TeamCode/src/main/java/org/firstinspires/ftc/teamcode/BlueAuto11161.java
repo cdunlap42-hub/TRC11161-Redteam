@@ -62,31 +62,38 @@ public class BlueAuto11161 extends LinearOpMode {
 
 
 
-        // 1. Drive forward 60 inches
+        // Drive forward 60 inches
         driveStraight(0.5, 60.0);
+
+        // sleep for half a second
         sleep(500);
-        // 2. READ OBELISK (DECODE Tags 21, 22, or 23)
+
+        // READ OBELISK (DECODE Tags 21, 22, or 23)
         List<AprilTagDetection> detections = new ArrayList<>();
-        int detectedObeliskID = 0;
         do {
             detections = aprilTag.getDetections();
-        } while (detections.isEmpty());
+        } while (detections.isEmpty());  // for as long as our detections array is empty, get more detections
 
-        // 3. Turn Counter-Clockwise 38 Degrees to find Blue Goal
+        // Turn Counter-Clockwise 38 Degrees to find Blue Goal
         turnRobot(0.4, 38);
 
+        // Drive stright 60 inches
         driveStraight(0.5, 48);
 
+        // Initialize revolver and kicker with no power and default position
         revolver.setPower(0.0);
         kicker.setPosition(KICKER_REST_POS);
 
+        // send telemetry for which apriltag was detected
         telemetry.addData("DETECTED ID: ", detections.get(0).id);
         telemetry.update();
 
+
+        // choose the correct combination of pushes and rotations to create the correct pattern
         switch(detections.get(0).id) {
 
             case 22:
-                // PGP
+                // P-G-P
                 rotateRevolverSteps(1);
                 shootSingleBall();
                 rotateRevolverSteps(2);
@@ -104,7 +111,7 @@ public class BlueAuto11161 extends LinearOpMode {
                 shootSingleBall();
                 break;
             case 21:
-                // GPP
+                // G-P-P
                 shootSingleBall();
                 rotateRevolverSteps(1);
                 shootSingleBall();
@@ -113,6 +120,7 @@ public class BlueAuto11161 extends LinearOpMode {
                 break;
         }
 
+        // back up ten inches
         driveStraight(0.5, -10);
 
         visionPortal.close();
