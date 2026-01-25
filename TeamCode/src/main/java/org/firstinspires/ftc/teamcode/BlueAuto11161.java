@@ -15,7 +15,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.ArrayList;
 import java.util.List;
 
-@Autonomous(name = "BLUE - DECODE 11161", group = "Blue")
+@Autonomous(name = "RED DECODE 11161", group = "Red")
 public class BlueAuto11161 extends LinearOpMode {
 
     // --- Hardware ---
@@ -61,7 +61,6 @@ public class BlueAuto11161 extends LinearOpMode {
         waitForStart();
 
 
-
         // Drive forward 60 inches
         driveStraight(0.5, 60.0);
 
@@ -89,47 +88,43 @@ public class BlueAuto11161 extends LinearOpMode {
         telemetry.update();
 
 
-        // choose the correct combination of pushes and rotations to create the correct pattern
-        switch(detections.get(0).id) {
+// choose the correct combination of pushes and rotations to create the correct pattern
+        switch (detections.get(0).id) {
+            case 21:
+                // Pattern: Green -> Purple -> Purple
+                // Start: Pos 1 (Green) is already at kicker
+                shootSingleBall();         // Shoots Green
+                rotateRevolverSteps(1);    // Move to Pos 2
+                shootSingleBall();         // Shoots Purple
+                rotateRevolverSteps(1);    // Move to Pos 3
+                shootSingleBall();         // Shoots Purple
+                break;
 
             case 22:
-                // P-G-P
-                rotateRevolverSteps(1);
-                shootSingleBall();
-                rotateRevolverSteps(2);
-                shootSingleBall();
-                rotateRevolverSteps(2);
-                shootSingleBall();
+                // Pattern: Purple -> Green -> Purple
+                rotateRevolverSteps(1);    // Move to Pos 2 (Purple)
+                shootSingleBall();         // Shoots Purple
+                rotateRevolverSteps(2);    // Move 2 steps forward (Back to Pos 1/Green)
+                shootSingleBall();         // Shoots Green
+                rotateRevolverSteps(2);    // Move 2 steps forward (Back to Pos 3/Purple)
+                shootSingleBall();         // Shoots Purple
                 break;
+
             case 23:
-                // P-P-G
-                rotateRevolverSteps(1);
-                shootSingleBall();
-                rotateRevolverSteps(1);
-                shootSingleBall();
-                rotateRevolverSteps(1);
-                shootSingleBall();
-                break;
-            case 21:
-                // G-P-P
-                shootSingleBall();
-                rotateRevolverSteps(1);
-                shootSingleBall();
-                rotateRevolverSteps(1);
-                shootSingleBall();
+                // Pattern: Purple -> Purple -> Green
+                rotateRevolverSteps(1);    // Move to Pos 2 (Purple)
+                shootSingleBall();         // Shoots Purple
+                rotateRevolverSteps(1);    // Move to Pos 3 (Purple)
+                shootSingleBall();         // Shoots Purple
+                rotateRevolverSteps(1);    // Move back to Pos 1 (Green)
+                shootSingleBall();         // Shoots Green
                 break;
         }
-
-        // back up ten inches
-        driveStraight(0.5, -10);
-
-        visionPortal.close();
     }
-
     // --- Helper Methods ---
 
     private void executeFullSequence(int startSteps, int nextSteps, int lastSteps) {
-        if (startSteps == 0) rotateRevolverSteps(startSteps);
+        if (startSteps > 0) rotateRevolverSteps(startSteps);
         shootSingleBall();
         rotateRevolverSteps(nextSteps);
         shootSingleBall();
