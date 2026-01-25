@@ -5,7 +5,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -16,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Autonomous(name = "RED DECODE 11161", group = "Red")
-public class BlueAuto11161 extends LinearOpMode {
+public class RedAuto11161 extends LinearOpMode {
 
     // --- Hardware ---
     private com.qualcomm.robotcore.hardware.DcMotorEx frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
@@ -35,9 +34,12 @@ public class BlueAuto11161 extends LinearOpMode {
     static final double KICKER_REST_POS = 0.7;
     static final double KICKER_UP_POS   = 0.3;
 
-    // --- BLUE SPECIFIC CONSTANTS ---
+    // --- RED SPECIFIC CONSTANTS ---
     static final int TARGET_GOAL_ID = 24;     // Blue Goal ID
     static final double DESIRED_DISTANCE = 40.0; // Blue Distance Requirement
+    static final double SPINNER_VELOCITY = 1400;  // set spinner velocity
+    static final double ramp_servo_pos_60 = 0.40;
+
 
     // --- Auto Align Gains ---
     final double SPEED_GAIN  =  0.02;
@@ -47,6 +49,10 @@ public class BlueAuto11161 extends LinearOpMode {
     @Override
     public void runOpMode() {
         initHardware();
+        // Inside initHardware()
+        spinnerMotor = hardwareMap.get(com.qualcomm.robotcore.hardware.DcMotorEx.class, "spinner_motor");
+        spinnerMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        spinnerMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         initAprilTag();
 
         // Simple telemetry to confirm we are in BLUE mode
@@ -79,12 +85,25 @@ public class BlueAuto11161 extends LinearOpMode {
         // Drive stright 60 inches
         driveStraight(0.5, 48);
 
-        // Initialize revolver and kicker with no power and default position
+
+// --- PREPARE FOR SHOOTING ---
+// 1. Move the ramp to the shooting angle (Pos 60)
+        rampServo.setPosition(ramp_servo_pos_60);
+
+// 2. Start the spinner at the required velocity
+        spinnerMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        spinnerMotor.setVelocity(SPINNER_VELOCITY);
+
+// 3. Initialize revolver and kicker
         revolver.setPower(0.0);
         kicker.setPosition(KICKER_REST_POS);
 
-        // send telemetry for which apriltag was detected
+// 4. Wait for robot to settle, ramp to arrive, and motor to spin up
+        sleep(1000);
+
+// send telemetry for which apriltag was detected
         telemetry.addData("DETECTED ID: ", detections.get(0).id);
+        telemetry.addData("Spinner Velocity", spinnerMotor.getVelocity());
         telemetry.update();
 
 
@@ -120,7 +139,10 @@ public class BlueAuto11161 extends LinearOpMode {
                 shootSingleBall();         // Shoots Green
                 break;
         }
+        spinnerMotor.setVelocity(0);
     }
+
+
     // --- Helper Methods ---
 
     private void executeFullSequence(int startSteps, int nextSteps, int lastSteps) {
