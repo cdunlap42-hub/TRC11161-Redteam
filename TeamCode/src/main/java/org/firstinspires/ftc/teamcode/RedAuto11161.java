@@ -49,10 +49,6 @@ public class RedAuto11161 extends LinearOpMode {
     @Override
     public void runOpMode() {
         initHardware();
-        // Inside initHardware()
-        spinnerMotor = hardwareMap.get(com.qualcomm.robotcore.hardware.DcMotorEx.class, "spinner_motor");
-        spinnerMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        spinnerMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         initAprilTag();
 
         // Simple telemetry to confirm we are in BLUE mode
@@ -80,7 +76,7 @@ public class RedAuto11161 extends LinearOpMode {
         } while (detections.isEmpty());  // for as long as our detections array is empty, get more detections
 
         // Turn Counter-Clockwise 38 Degrees to find Blue Goal
-        turnRobot(0.4, 38);
+        turnRobot(0.4, -38);
 
         // Drive stright 60 inches
         driveStraight(0.5, 48);
@@ -223,9 +219,15 @@ public class RedAuto11161 extends LinearOpMode {
         backRightDrive.setDirection(DcMotor.Direction.REVERSE);
         kicker.setDirection(Servo.Direction.FORWARD);
         revolver.setDirection(CRServo.Direction.FORWARD);
+        spinnerMotor = hardwareMap.get(com.qualcomm.robotcore.hardware.DcMotorEx.class, "spinner_motor");
+        spinnerMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        spinnerMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        // Inside initHardware()
+
+
     }
 
     private void initAprilTag() {
