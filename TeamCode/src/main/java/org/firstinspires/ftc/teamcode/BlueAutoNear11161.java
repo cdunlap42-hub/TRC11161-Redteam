@@ -2,35 +2,35 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.CRServo;
 
-// Added this import to fix the VisionPortal error
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-import java.util.List;
-import java.util.ArrayList;
 
-@Autonomous(name = "Blue Auto Near 11161", group = "Autonomous")
+import java.util.List;
+
+@Autonomous(name = "BLUE NEAR 11161", group = "Blue")
 public class BlueAutoNear11161 extends LinearOpMode {
 
-    /* Hardware Members */
-    private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
+    /* Hardware */
+    private DcMotorEx frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
     private DcMotorEx spinnerMotor;
+
+    private int detectedId = -1;
+    private Servo rampServo, kicker;
     private CRServo revolver;
-    private Servo kicker, rampServo;
 
     /* Constants */
-    private static final double KICKER_REST_POS = 0.7;
-    private static final double KICKER_UP_POS   = 0.4;
-    private static final double RAMP_POS_60     = 0.6;
-    private static final int SPINNER_VELOCITY   = 1400;
-
-    static final double COUNTS_PER_INCH = 45.0;
+    static final double REVOLVER_STEP_TIME = 0.540;
+    static final double KICKER_REST_POS    = 0.7;
+    static final double KICKER_UP_POS      = 0.3;
+    static final double SPINNER_VELOCITY   = 1500;
+    static final double RAMP_POS_60        = 0.20;
 
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
@@ -41,142 +41,161 @@ public class BlueAutoNear11161 extends LinearOpMode {
         initAprilTag();
 
         while (opModeInInit()) {
-            telemetry.addLine("BLUE AUTO NEAR - Ready");
-            displayAprilTagTelemetry();
+            telemetry.addData("Status", "Ready - BLUE");
+            telemetryAprilTag();
             telemetry.update();
         }
 
         waitForStart();
 
-        // 1. BACK UP 40 INCHES
-        driveStraight(0.5, -40.0);
-        sleep(500);
 
-        // 2. READ OBELISK
-        List<AprilTagDetection> detections;
-        long scanStartTime = System.currentTimeMillis();
-        do {
-            detections = aprilTag.getDetections();
-            if (System.currentTimeMillis() - scanStartTime > 3000) break;
-        } while (detections.isEmpty() && opModeIsActive());
+        telemetry.addData("Memory Saved ID", detectedId);
+        telemetry.update();
 
-        // 3. TURN 38 DEGREES CLOCKWISE
-        turnRobot(0.4, 38);
+        // 1. DRIVE FORWARD (Power, Seconds)
+        // Adjust time to replace the 60-inch move
+        driveTime(0.5, 3.0);
         sleep(200);
 
-        // 4. PREPARE FOR SHOOTING
+        // 2. TURN (Power, Seconds) - Positive power turns CCW (Left)
+        // Adjust time to replace 180-degree turn
+        turnTime(0.4, 2.9);
+        sleep(200);
+
+        // 3. READ OBELISK (Capture ID immediately)
+        detectedId = -1;
+        long scanStartTime = System.currentTimeMillis();
+        while (opModeIsActive() && detectedId == -1 && (System.currentTimeMillis() - scanStartTime < 4000)) {
+            List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+            for (AprilTagDetection detection : currentDetections) {
+                if (detection.id == 21 || detection.id == 22 || detection.id == 23) {
+                    detectedId = detection.id;
+                    break;
+                }
+            }
+        }
+        // 4. TURN (Power, Seconds) - Positive power turns CCW (Left)
+        // Adjust time to replace 45-degree turn
+        turnTime(0.4, 1.0);
+        sleep(200);
+
+        // 5. PREPARE FOR SHOOTING
         rampServo.setPosition(RAMP_POS_60);
         spinnerMotor.setVelocity(SPINNER_VELOCITY);
+        sleep(1500); // Wait for spin-up
 
-        driveStraight(0.5, 48);
-        sleep(1000);
-
-        // 5. EXECUTE PATTERN
-        if (!detections.isEmpty()) {
-            int tagId = detections.get(0).id;
-            switch (tagId) {
-                case 21: executeFullSequence(0, 1, 1); break; // G-P-P
-                case 22: executeFullSequence(1, 2, 2); break; // P-G-P
-                case 23: executeFullSequence(1, 1, 1); break; // P-P-G
-            }
+        // 6. EXECUTE SEQUENCE BASED ON MEMORY
+        if (detectedId == 21) {
+            // Pattern for ID 21: G-P-P
+            shootSingleBall();         // Green
+            rotateRevolverSteps(1);    // To Pos 2
+            shootSingleBall();         // Purple
+            rotateRevolverSteps(1);    // To Pos 3
+            shootSingleBall();         // Purple
+        }
+        else if (detectedId == 22) {
+            // Pattern for ID 22: P-G-P
+            rotateRevolverSteps(1);    // To Pos 2 (Purple)
+            shootSingleBall();
+            rotateRevolverSteps(2);    // To Pos 1 (Green)
+            shootSingleBall();
+            rotateRevolverSteps(2);    // To Pos 3 (Purple)
+            shootSingleBall();
+        }
+        else if (detectedId == 23) {
+            // Pattern for ID 23: P-P-G
+            rotateRevolverSteps(1);    // To Pos 2 (Purple)
+            shootSingleBall();
+            rotateRevolverSteps(1);    // To Pos 3 (Purple)
+            shootSingleBall();
+            rotateRevolverSteps(1);    // To Pos 1 (Green)
+            shootSingleBall();
+        }
+        else {
+            // Fallback if nothing seen: Just shoot what is in front
+            shootSingleBall();
         }
 
         spinnerMotor.setVelocity(0);
         visionPortal.close();
     }
 
-    private void executeFullSequence(int startSteps, int nextSteps, int lastSteps) {
-        if (startSteps > 0) rotateRevolverSteps(startSteps);
-        shootSingleBall();
-        rotateRevolverSteps(nextSteps);
-        shootSingleBall();
-        rotateRevolverSteps(lastSteps);
-        shootSingleBall();
+    /* Simple Movement Methods */
+
+    public void driveTime(double power, double seconds) {
+        setDrivePower(power, power, power, power);
+        sleep((long)(seconds * 1000));
+        setDrivePower(0, 0, 0, 0);
     }
+
+    public void turnTime(double power, double seconds) {
+        // Turning Left (CCW): Left motors back, Right motors forward
+        setDrivePower(-power, -power, power, power);
+        sleep((long)(seconds * 1000));
+        setDrivePower(0, 0, 0, 0);
+    }
+
+    private void setDrivePower(double fl, double bl, double fr, double br) {
+        frontLeftDrive.setPower(fl);
+        backLeftDrive.setPower(bl);
+        frontRightDrive.setPower(fr);
+        backRightDrive.setPower(br);
+    }
+
+    /* Shooting Methods */
 
     private void shootSingleBall() {
         kicker.setPosition(KICKER_UP_POS);
-        sleep(400);
+        sleep(600);
         kicker.setPosition(KICKER_REST_POS);
         sleep(400);
     }
 
-    private void rotateRevolverSteps(int steps) {
-        revolver.setPower(0.5);
-        sleep(450 * steps);
-        revolver.setPower(0);
-        sleep(200);
-    }
-
-    private void driveStraight(double speed, double inches) {
-        int moveCounts = (int)(inches * COUNTS_PER_INCH);
-        // Set targets for ALL 4 motors
-        frontLeftDrive.setTargetPosition(frontLeftDrive.getCurrentPosition() + moveCounts);
-        frontRightDrive.setTargetPosition(frontRightDrive.getCurrentPosition() + moveCounts);
-        backLeftDrive.setTargetPosition(backLeftDrive.getCurrentPosition() + moveCounts);
-        backRightDrive.setTargetPosition(backRightDrive.getCurrentPosition() + moveCounts);
-
-        setDriveMode(DcMotor.RunMode.RUN_TO_POSITION);
-        setDrivePower(speed);
-
-        while (opModeIsActive() && frontLeftDrive.isBusy()) { idle(); }
-        setDrivePower(0);
-    }
-
-    private void turnRobot(double speed, double degrees) {
-        int turnCounts = (int)(degrees * 10);
-        frontLeftDrive.setTargetPosition(frontLeftDrive.getCurrentPosition() - turnCounts);
-        backLeftDrive.setTargetPosition(backLeftDrive.getCurrentPosition() - turnCounts);
-        frontRightDrive.setTargetPosition(frontRightDrive.getCurrentPosition() + turnCounts);
-        backRightDrive.setTargetPosition(backRightDrive.getCurrentPosition() + turnCounts);
-
-        setDriveMode(DcMotor.RunMode.RUN_TO_POSITION);
-        setDrivePower(speed);
-        while (opModeIsActive() && frontLeftDrive.isBusy()) { idle(); }
-        setDrivePower(0);
+    public void rotateRevolverSteps(int steps) {
+        revolver.setPower(1.0);
+        sleep((long)(REVOLVER_STEP_TIME * steps * 1000));
+        revolver.setPower(0.0);
+        sleep(300);
     }
 
     private void initHardware() {
-        frontLeftDrive  = hardwareMap.get(DcMotor.class, "front_left_drive");
-        frontRightDrive = hardwareMap.get(DcMotor.class, "front_right_drive");
-        backLeftDrive   = hardwareMap.get(DcMotor.class, "back_left_drive");
-        backRightDrive  = hardwareMap.get(DcMotor.class, "back_right_drive");
+        frontLeftDrive  = hardwareMap.get(DcMotorEx.class, "front_left_drive");
+        backLeftDrive   = hardwareMap.get(DcMotorEx.class, "back_left_drive");
+        frontRightDrive = hardwareMap.get(DcMotorEx.class, "front_right_drive");
+        backRightDrive  = hardwareMap.get(DcMotorEx.class, "back_right_drive");
+        spinnerMotor    = hardwareMap.get(DcMotorEx.class, "spinner_motor");
+        rampServo       = hardwareMap.get(Servo.class, "ramp_servo");
+        revolver        = hardwareMap.get(CRServo.class, "revolver");
+        kicker          = hardwareMap.get(Servo.class, "kicker");
 
-        spinnerMotor = hardwareMap.get(DcMotorEx.class, "spinner_motor");
-        revolver     = hardwareMap.get(CRServo.class, "revolver");
-        kicker       = hardwareMap.get(Servo.class, "kicker");
-        rampServo    = hardwareMap.get(Servo.class, "ramp_servo");
+        // Directions
+        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        backLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        backRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
-        spinnerMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        // Reset all motor modes to simple power mode
+        frontLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         spinnerMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-    }
-
-    private void setDrivePower(double p) {
-        frontLeftDrive.setPower(p); frontRightDrive.setPower(p);
-        backLeftDrive.setPower(p); backRightDrive.setPower(p);
-    }
-
-    private void setDriveMode(DcMotor.RunMode m) {
-        frontLeftDrive.setMode(m); frontRightDrive.setMode(m);
-        backLeftDrive.setMode(m); backRightDrive.setMode(m);
     }
 
     private void initAprilTag() {
         aprilTag = AprilTagProcessor.easyCreateWithDefaults();
-        // FIXED: Using WebcamName.class to resolve the build error
+        // Uses the correct WebcamName.class to avoid the previous error
         visionPortal = VisionPortal.easyCreateWithDefaults(
-                hardwareMap.get(WebcamName.class, "Webcam 1"),
+                hardwareMap.get(WebcamName.class, "webcam1"),
                 aprilTag
         );
     }
 
-    private void displayAprilTagTelemetry() {
+    private void telemetryAprilTag() {
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
         for (AprilTagDetection detection : currentDetections) {
-            telemetry.addData("Detected ID", detection.id);
+            telemetry.addLine(String.format("ID %d detected", detection.id));
         }
     }
 }

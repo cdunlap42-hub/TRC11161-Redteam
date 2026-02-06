@@ -25,4 +25,8 @@ android {
 
 dependencies {
     implementation project(':FtcRobotController')
+
+    // Road Runner 1.0 Java Dependencies
+    implementation "com.acmerobotics.roadrunner:ftc:0.1.25"
+    implementation "com.acmerobotics.dashboard:dashboard:0.5.1"
 }

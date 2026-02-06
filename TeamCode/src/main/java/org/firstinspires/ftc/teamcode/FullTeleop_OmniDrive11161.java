@@ -35,7 +35,7 @@ public class FullTeleop_OmniDrive11161 extends LinearOpMode {
     static final double KICKER_UP_POS   = 0.2;
     static final double KICK_DURATION   = 0.3;
 
-    static final double RAMP_POS_60 = 0.40, RAMP_POS_40 = 0.30, RAMP_POS_20 = 0.20, RAMP_POS_REST = 0.0;
+    static final double RAMP_POS_60 = 0.20, RAMP_POS_40 = 0.17, RAMP_POS_20 = 0.10, RAMP_POS_REST = 0.00;
     static final double SPINNER_VELOCITY = 1400;
 
     @Override
@@ -64,7 +64,7 @@ public class FullTeleop_OmniDrive11161 extends LinearOpMode {
         intake.setDirection(DcMotor.Direction.REVERSE);
         conveyance.setDirection(DcMotor.Direction.REVERSE);
 
-        rampServo.setDirection(Servo.Direction.REVERSE);
+        rampServo.setDirection(Servo.Direction.FORWARD);
 
         // Kicker configuration
         kicker.setDirection(Servo.Direction.FORWARD);

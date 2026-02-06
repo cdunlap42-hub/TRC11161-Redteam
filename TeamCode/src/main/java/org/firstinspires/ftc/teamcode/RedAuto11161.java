@@ -24,10 +24,10 @@ public class RedAuto11161 extends LinearOpMode {
     private CRServo revolver;
 
     /* Constants */
-    static final double REVOLVER_STEP_TIME = 0.520;
+    static final double REVOLVER_STEP_TIME = 0.540;
     static final double KICKER_REST_POS    = 0.7;
     static final double KICKER_UP_POS      = 0.3;
-    static final double SPINNER_VELOCITY   = 1400;
+    static final double SPINNER_VELOCITY   = 1500;
     static final double RAMP_POS_60        = 0.20;
 
     private AprilTagProcessor aprilTag;
@@ -63,11 +63,11 @@ public class RedAuto11161 extends LinearOpMode {
         telemetry.update();
 
         // 2. DRIVE FORWARD (Power, Seconds)
-        driveTime(0.5, 4.0);
+        driveTime(0.5, 4.5);
         sleep(200);
 
-        // 3. TURN LEFT (Power, Seconds) - CCW
-        turnTime(0.4, 1.0);
+        // 3. TURN RIGHT (Power, Seconds) - CW
+        turnTime(0.4, 0.8);
         sleep(200);
 
         // 4. PREPARE FOR SHOOTING
@@ -123,8 +123,8 @@ public class RedAuto11161 extends LinearOpMode {
     }
 
     public void turnTime(double power, double seconds) {
-        // Turning Left (CCW): Left motors back, Right motors forward
-        setDrivePower(-power, -power, power, power);
+        // Turning Right (CCW): Left motors forward, Right motors back
+        setDrivePower(power, power, -power, -power);
         sleep((long)(seconds * 1000));
         setDrivePower(0, 0, 0, 0);
     }
@@ -191,7 +191,7 @@ public class RedAuto11161 extends LinearOpMode {
         aprilTag = AprilTagProcessor.easyCreateWithDefaults();
         // Uses the correct WebcamName.class to avoid the previous error
         visionPortal = VisionPortal.easyCreateWithDefaults(
-                hardwareMap.get(WebcamName.class, "Webcam 1"),
+                hardwareMap.get(WebcamName.class, "webcam1"),
                 aprilTag
         );
     }
